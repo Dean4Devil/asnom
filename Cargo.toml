@@ -1,0 +1,8 @@
+[package]
+name = "asnom"
+version = "0.1.0"
+authors = ["Gregor Reitzenstein <dean4devil@paranoidlabs.org>"]
+
+[dependencies]
+nom = "2.0.1"
+byteorder = "1.0.0"
