@@ -1,24 +1,21 @@
-use common::Tag;
-use common::TagPrimitive;
-use common::TagConstructed;
-use common::TypeHeader;
-use common::ClassT;
-use common::PCT;
+use structure::{StructureTag, PL};
+use common::TagStructure;
+use common::TagClass;
 
 use nom;
 use nom::InputLength;
 
-named!(class_bits<(&[u8], usize), ClassT>,
+named!(class_bits<(&[u8], usize), TagClass>,
     map_opt!(
         take_bits!(u8, 2),
-        ClassT::from_u8
+        TagClass::from_u8
     )
 );
 
-named!(pc_bit<(&[u8], usize), PCT>,
+named!(pc_bit<(&[u8], usize), TagStructure>,
     map_opt!(
         take_bits!(u8, 1),
-        PCT::from_u8
+        TagStructure::from_u8
     )
 );
 
@@ -26,16 +23,16 @@ named!(tagnr_bits<(&[u8], usize), u64>,
     take_bits!(u64, 5)
 );
 
-named!(parse_type_header<TypeHeader>, bits!(
+named!(pub parse_type_header<(TagClass, TagStructure, u64)>, bits!(
     do_parse!(
         class: class_bits >>
         pc: pc_bit >>
         tagnr: tagnr_bits >>
-        ( TypeHeader { class: class, pc: pc, tagnr: tagnr } )
+        ((class, pc, tagnr))
    )
 ));
 
-named!(parse_length<u64>,
+named!(pub parse_length<u64>,
     alt!(
         bits!(
             do_parse!(
@@ -77,107 +74,82 @@ pub fn parse_uint(i: &[u8]) -> nom::IResult<&[u8], u64> {
     }
 }
 
-pub fn parse_tag(i: &[u8]) -> nom::IResult<&[u8], Tag> {
-    let (i, (hdr,len)) = try_parse!(i, do_parse!(
+pub fn parse_tag(i: &[u8]) -> nom::IResult<&[u8], StructureTag> {
+    let (mut i, ((class, structure, id),len)) = try_parse!(i, do_parse!(
         hdr: parse_type_header >>
         len: parse_length >>
         ((hdr, len))
     ));
 
-    match hdr.pc {
-        PCT::Primitive => {
-            let (i, content) = try_parse!(i, length_bytes!(value!(len)));
-            let t = TagPrimitive {
-                class: hdr.class,
-                tag_number: hdr.tagnr,
-                inner: content.to_vec(),
-            };
-            nom::IResult::Done(i, Tag::Primitive(t))
+    let pl: PL = match structure {
+        TagStructure::Primitive => {
+            let (j, content) = try_parse!(i, length_data!(value!(len)));
+            i = j;
+
+            PL::P(content.to_vec())
         }
-        PCT::Constructed => {
-            let mut content: &[u8];
-            let pres = try_parse!(i, length_bytes!(value!(len)));
+        TagStructure::Constructed => {
+            let (j, mut content) = try_parse!(i, length_bytes!(value!(len)));
+            i = j;
 
-            let i = pres.0;
-            content = pres.1;
-
-            let mut tv: Vec<Tag> = Vec::new();
+            let mut tv: Vec<StructureTag> = Vec::new();
             while content.input_len() > 0 {
                 let pres = try_parse!(content, call!(parse_tag));
                 content = pres.0;
-                let res: Tag = pres.1;
+                let res: StructureTag = pres.1;
                 tv.push(res);
             }
-            let t = TagConstructed {
-                class: hdr.class,
-                tag_number: hdr.tagnr,
-                inner: tv,
-            };
-            nom::IResult::Done(i, Tag::Constructed(t))
+
+            PL::C(tv)
         }
-    }
+    };
+
+    nom::IResult::Done(i, StructureTag {
+        class: class,
+        id: id,
+        payload: pl,
+    })
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use nom::IResult;
-    use common::{TypeHeader, ClassT, PCT, Tag, TagPrimitive, TagConstructed};
+    use common::{TagClass, TagStructure};
+    use structure::{StructureTag, PL};
 
     #[test]
     fn test_primitive() {
         let bytes: Vec<u8> = vec![2, 2, 255, 127];
-        let result_tag: Tag = Tag::Primitive(TagPrimitive {
-            class: ClassT::Universal,
-            tag_number: 2u64,
-            inner: vec![255, 127],
-        });
+        let result_tag = StructureTag {
+            class: TagClass::Universal,
+            id: 2u64,
+            payload: PL::P( vec![255,127] )
+        };
         let rest_tag: Vec<u8> = vec![];
 
         let tag = parse_tag(&bytes[..]);
 
-        assert_eq!(tag,
-                   IResult::Done(&rest_tag[..], result_tag));
+        assert_eq!(tag, IResult::Done(&rest_tag[..], result_tag));
     }
 
     #[test]
     fn test_constructed() {
         let bytes: Vec<u8> = vec![48,14,12,12,72,101,108,108,111,32,87,111,114,108,100,33];
-        let result_tag: Tag = Tag::Constructed(TagConstructed {
-            class: ClassT::Universal,
-            tag_number: 16u64,
-            inner: vec![Tag::Primitive(TagPrimitive {
-                class: ClassT::Universal,
-                tag_number: 12,
-                inner: vec![72, 101, 108, 108, 111, 32, 87, 111, 114, 108, 100, 33]
-            })],
-        });
+        let result_tag = StructureTag {
+            class: TagClass::Universal,
+            id: 16u64,
+            payload: PL::C(vec![StructureTag {
+                class: TagClass::Universal,
+                id: 12u64,
+                payload: PL::P(vec![72,101,108,108,111,32,87,111,114,108,100,33]),
+            }]),
+        };
         let rest_tag: Vec<u8> = vec![];
 
         let tag = parse_tag(&bytes[..]);
 
-        assert_eq!(tag,
-                   IResult::Done(&rest_tag[..], result_tag));
-    }
-
-    // FIXME
-    //#[test]
-    fn invalid_length() {
-        let bytes: Vec<u8> = vec![48, 255];
-        let result_type = TypeHeader {
-            class: ClassT::Universal,
-            pc: PCT::Constructed,
-            tagnr: 16u64,
-        };
-        let rest_type: Vec<u8> = vec![255];
-        assert_eq!(super::parse_type_header(&bytes[..]),
-                   IResult::Done(&rest_type[..], result_type));
-
-        let result_len= 255u64;
-        let rest_len: Vec<u8> = vec![];
-        assert_eq!(super::parse_length(&rest_type[..]),
-                   IResult::Done(&rest_len[..], result_len));
-
+        assert_eq!(tag, IResult::Done(&rest_tag[..], result_tag));
     }
 
     #[test]
@@ -250,18 +222,26 @@ mod test {
             0x6E, 0x67, 0x54, 0x61,
             0x67,
         ];
-        let result_type = TypeHeader {
-            class: ClassT::Universal,
-            pc: PCT::Constructed,
-            tagnr: 16u64,
-        };
-        let rest_type: Vec<u8> = bytes[1..].to_vec();
-        assert_eq!(super::parse_type_header(&bytes[..]),
-                   IResult::Done(&rest_type[..], result_type));
 
-        let result_len= 257u64;
-        let rest_len: Vec<u8> = rest_type[3..].to_vec();
-        assert_eq!(super::parse_length(&rest_type[..]),
-                   IResult::Done(&rest_len[..], result_len));
+        let result_tag = StructureTag {
+            class: TagClass::Universal,
+            id: 16u64,
+            payload: PL::C(vec![StructureTag {
+                class: TagClass::Context,
+                id: 0,
+                payload: PL::P(vec![74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103])
+            },
+            StructureTag {
+                class: TagClass::Context,
+                id: 1,
+                payload: PL::P(vec![74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103, 74, 117, 115, 116, 65, 76, 111, 110, 103, 84, 97, 103])
+            }]),
+        };
+
+        let rest_tag = Vec::new();
+
+        let tag = parse_tag(&bytes[..]);
+        assert_eq!(tag, IResult::Done(&rest_tag[..], result_tag));
+
     }
 }

@@ -1,93 +1,45 @@
-#[derive(Clone, Debug, PartialEq)]
-pub enum Tag {
-    Primitive(TagPrimitive),
-    Constructed(TagConstructed),
+use traits::AsBER;
+
+use universal::UniversalTag;
+use specific::SpecificTag;
+
+pub enum ContentTag<T> {
+    Universal(UniversalTag<T>),
+    Specific(SpecificTag<T>)
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct TagPrimitive {
-    pub class: ClassT,
-    pub tag_number: u64,
-    pub inner: Vec<u8>,
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum TagStructure {
+    Primitive = 0,
+    Constructed = 1,
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct TagConstructed {
-    pub class: ClassT,
-    pub tag_number: u64,
-    pub inner: Vec<Tag>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct TypeHeader {
-    pub class: ClassT,
-    pub pc: PCT,
-    pub tagnr: u64,
-}
-
-impl TypeHeader {
-    pub fn from_tag(tag: &Tag) -> TypeHeader{
-        match tag {
-            &Tag::Primitive(ref i) => TypeHeader {
-                class: i.class,
-                pc: PCT::Primitive,
-                tagnr: i.tag_number,
-            },
-            &Tag::Constructed(ref i) => TypeHeader {
-                class: i.class,
-                pc: PCT::Constructed,
-                tagnr: i.tag_number,
-            },
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum ClassT {
-    Universal,
-    Application,
-    ContextSpecific,
-    Private,
-}
-
-impl ClassT {
-    pub fn from_u8(n: u8) -> Option<ClassT> {
+impl TagStructure {
+    pub fn from_u8(n: u8) -> Option<TagStructure> {
         match n {
-            0 => Some(ClassT::Universal),
-            1 => Some(ClassT::Application),
-            2 => Some(ClassT::ContextSpecific),
-            3 => Some(ClassT::Private),
-            _ => None,
-        }
-    }
-    pub fn to_u8(c: ClassT) -> u8 {
-        match c {
-            ClassT::Universal => 0,
-            ClassT::Application => 1,
-            ClassT::ContextSpecific => 2,
-            ClassT::Private => 3,
+            0 => Some(TagStructure::Primitive),
+            1 => Some(TagStructure::Constructed),
+            _ => None
         }
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum PCT {
-    Primitive,
-    Constructed,
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum TagClass {
+    Universal = 0,
+    Application = 1,
+    Context = 2,
+    Private = 3,
 }
 
-impl PCT {
-    pub fn from_u8(n: u8) -> Option<PCT> {
+impl TagClass {
+    pub fn from_u8(n: u8) -> Option<TagClass> {
         match n {
-            0 => Some(PCT::Primitive),
-            1 => Some(PCT::Constructed),
-            _ => None,
-        }
-    }
-    pub fn to_u8(s: PCT) -> u8 {
-        match s {
-            PCT::Primitive => 0,
-            PCT::Constructed => 1,
+            0 => Some(TagClass::Universal),
+            1 => Some(TagClass::Application),
+            2 => Some(TagClass::Context),
+            3 => Some(TagClass::Private),
+            _ => None
         }
     }
 }

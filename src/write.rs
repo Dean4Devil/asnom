@@ -1,6 +1,4 @@
-use common::Tag;
-use common::{TypeHeader, ClassT, PCT};
-use common::{TagConstructed, TagPrimitive};
+use common::{TagClass, TagStructure};
 
 use std::io::Write;
 
@@ -8,48 +6,23 @@ use byteorder::BigEndian;
 use byteorder::ByteOrder;
 use byteorder::WriteBytesExt;
 
-pub fn encode(tag: &Tag) -> Vec<u8> {
-    let mut out: Vec<u8> = Vec::new();
-    encode_into(&mut out, tag);
-    return out;
-}
-
-pub fn encode_into(mut w: &mut Write, input: &Tag) {
-    match input {
-        &Tag::Primitive(ref tag) => {
-            write_type(w, TypeHeader::from_tag(&input));
-            write_length(w, tag.inner.len() as u64);
-            w.write_all(&tag.inner);
-        },
-        &Tag::Constructed(ref tag) => {
-            let mut out: Vec<u8> = Vec::new();
-            for subtag in &tag.inner {
-                encode_into(&mut out, &subtag);
-            }
-            write_type(w, TypeHeader::from_tag(&input));
-            write_length(w, out.len() as u64);
-            w.write_all(&out);
-        },
-    }
-}
-
-
-fn write_type(mut w: &mut Write, tagtype: TypeHeader) {
+pub fn write_type(mut w: &mut Write, class: TagClass, structure: TagStructure, id: u64) {
     let mut extended_tag: Option<Vec<u8>> = None;
 
     let type_byte = {
         // First two bits: Class
-        (ClassT::to_u8(tagtype.class)) << 6 |
+        (class as u8) << 6 |
         // Bit 6: Primitive/Constructed
-        (PCT::to_u8(tagtype.pc)) << 5 |
+        (structure as u8) << 5 |
         // Bit 5-1: Tag Number
-        if tagtype.tagnr > 30
+        if id > 30
         {
             let mut tagbytes: Vec<u8> = Vec::new();
 
-            let mut tag = tagtype.tagnr;
+            let mut tag = id;
             while tag > 0
             {
+                // Only take the 7 lower bits.
                 let mut byte = (tag & 0x7F) as u8;
 
                 tag >>= 7;
@@ -60,12 +33,12 @@ fn write_type(mut w: &mut Write, tagtype: TypeHeader) {
             extended_tag = Some(tagbytes);
 
             // This means we need to set the 5 tag bits to 11111, so 31 or 0x1F
-            31
+            0x1F
         }
         else
         {
             extended_tag = None;
-            tagtype.tagnr as u8
+            id as u8
         }
     }; // let type_byte
 
@@ -91,7 +64,7 @@ fn write_type(mut w: &mut Write, tagtype: TypeHeader) {
 }
 
 // Yes I know you could overflow the length in theory. But, do you have 2^64 bytes of memory?
-fn write_length(mut w: &mut Write, mut length: u64) {
+pub fn write_length(mut w: &mut Write, mut length: u64) {
     // Short form
     if length < 128
     {
@@ -110,7 +83,7 @@ fn write_length(mut w: &mut Write, mut length: u64) {
     }
 }
 
-#[cfg(test)]
+#[cfg(atest)]
 mod tests {
     use super::*;
 
