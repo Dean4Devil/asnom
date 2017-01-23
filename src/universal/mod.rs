@@ -2,7 +2,7 @@ use std::ops::{Deref, DerefMut};
 
 use traits::{BERPayload, BERTag};
 
-//mod number;
+mod number;
 
 pub trait UniversalPayload: BERPayload {
     fn id(&self) -> UniversalNr;

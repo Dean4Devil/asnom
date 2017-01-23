@@ -1,6 +1,8 @@
 use traits::{BERPayload, BERTag};
 use common::{TagStructure, TagClass};
 
+use structure::StructureTag;
+
 use parse::{parse_type_header, parse_length};
 
 use write::{write_type, write_length};
@@ -26,53 +28,28 @@ impl<T: BERPayload> SpecificTag<T> {
     }
 }
 
-impl<T: BERPayload> BERTag for SpecificTag<T> {
-    fn decode(bytes: &[u8]) -> Option<Self> {
-        None
-    }
-
-    fn encode_into(&self, out: &mut Vec<u8>) {
-        write_type(out, self.class, self.structure, self.id);
-        write_length(out, self.inner.len());
-        self.inner.encode_into(out);
-    }
+struct Something {
+    a: u32,
+    b: u32,
 }
 
-impl<T: BERPayload> BERPayload for Vec<SpecificTag<T>> {
-    fn decode(bytes: &[u8]) -> Option<Self> {
-        let out: Vec<SpecificTag<T>> = Vec::new();
-        None
-    }
+impl Something {
+    fn fill(tag: StructureTag) -> Option<Something> {
+        if let Some(i) = tag
+            .match_class(TagClass::Application)
+            .and_then(|x| x.match_id(42u64))
+        {
+            if let Some(mut j) = i.expect_constructed() {
+                let b = j.pop().unwrap();
+                let a = j.pop().unwrap();
 
-    fn encode_into(&self, out: &mut Vec<u8>) {
-        for tag in self {
-            tag.encode_into(out);
+                None
+
+            } else {
+                None
+            }
+        } else {
+            None
         }
-    }
-
-    fn len(&self) -> u64 {
-        let mut len = 0u64;
-
-        for tag in self {
-            len += tag.inner.len();
-        }
-
-        len
-    }
-}
-
-impl BERPayload for Vec<u8> {
-    fn decode(bytes: &[u8]) -> Option<Self> {
-        Some(bytes.to_vec())
-    }
-
-    fn encode_into(&self, out: &mut Vec<u8>) {
-        for byte in self {
-            out.push(*byte);
-        }
-    }
-
-    fn len(&self) -> u64 {
-        self.len() as u64
     }
 }
