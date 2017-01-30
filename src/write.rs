@@ -1,10 +1,35 @@
 use common::{TagClass, TagStructure};
+use structure::{StructureTag, PL};
 
+use std::io;
 use std::io::Write;
 
 use byteorder::BigEndian;
 use byteorder::ByteOrder;
 use byteorder::WriteBytesExt;
+
+pub fn encode_into(buf: &mut Vec<u8>, tag: StructureTag) -> io::Result<()> {
+    let structure = match tag.payload {
+        PL::P(_) => TagStructure::Primitive,
+        PL::C(_) => TagStructure::Constructed,
+    };
+
+    write_type(buf, tag.class, structure, tag.id);
+    match tag.payload {
+        PL::P(v) => {
+            for byte in v {
+                buf.push(byte);
+            }
+        },
+        PL::C(tags) => {
+            for tag in tags {
+                try!(encode_into(buf, tag));
+            }
+        }
+    };
+
+    Ok(())
+}
 
 pub fn write_type(mut w: &mut Write, class: TagClass, structure: TagStructure, id: u64) {
     let mut extended_tag: Option<Vec<u8>> = None;
