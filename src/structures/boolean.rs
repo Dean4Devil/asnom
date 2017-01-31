@@ -1,0 +1,34 @@
+use std::default;
+use universal;
+use structure;
+
+use super::ASNTag;
+use common::TagClass;
+
+#[derive(Clone, Copy, Debug)]
+pub struct Boolean {
+    id: u64,
+    class: TagClass,
+    inner: bool,
+}
+
+impl ASNTag for Boolean {
+    fn into_structure(self) -> structure::StructureTag {
+        structure::StructureTag {
+            id: self.id,
+            class: self.class,
+            payload: structure::PL::P(if self.inner { vec![0xFF] } else { vec![0x00] }),
+        }
+    }
+}
+
+
+impl default::Default for Boolean {
+    fn default() -> Self {
+        Boolean {
+            id: universal::Types::Boolean as u64,
+            class: TagClass::Universal,
+            inner: false,
+        }
+    }
+}
