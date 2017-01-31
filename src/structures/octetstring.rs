@@ -7,9 +7,9 @@ use common::TagClass;
 
 #[derive(Clone, Debug)]
 pub struct OctetString {
-    id: u64,
-    class: TagClass,
-    inner: Vec<u8>,
+    pub id: u64,
+    pub class: TagClass,
+    pub inner: Vec<u8>,
 }
 
 impl ASNTag for OctetString {

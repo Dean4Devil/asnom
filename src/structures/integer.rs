@@ -9,9 +9,9 @@ use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Integer {
-    id: u64,
-    class: TagClass,
-    inner: i64,
+    pub id: u64,
+    pub class: TagClass,
+    pub inner: i64,
 }
 
 impl ASNTag for Integer {

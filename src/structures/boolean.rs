@@ -7,9 +7,9 @@ use common::TagClass;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Boolean {
-    id: u64,
-    class: TagClass,
-    inner: bool,
+    pub id: u64,
+    pub class: TagClass,
+    pub inner: bool,
 }
 
 impl ASNTag for Boolean {

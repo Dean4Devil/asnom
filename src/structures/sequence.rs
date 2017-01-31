@@ -7,9 +7,9 @@ use common::TagClass;
 
 #[derive(Clone, Debug)]
 pub struct Sequence {
-    id: u64,
-    class: TagClass,
-    inner: Vec<Tag>,
+    pub id: u64,
+    pub class: TagClass,
+    pub inner: Vec<Tag>,
 }
 
 impl ASNTag for Sequence {
@@ -34,9 +34,9 @@ impl default::Default for Sequence {
 
 #[derive(Clone, Debug)]
 pub struct SequenceOf<T> {
-    id: u64,
-    class: TagClass,
-    inner: Vec<T>,
+    pub id: u64,
+    pub class: TagClass,
+    pub inner: Vec<T>,
 }
 
 impl<T: ASNTag + Sized> SequenceOf<T> {
@@ -61,9 +61,9 @@ impl<T: ASNTag + Sized> default::Default for SequenceOf<T> {
 
 #[derive(Clone, Debug)]
 pub struct SetOf<T> {
-    id: u64,
-    class: TagClass,
-    inner: Vec<T>,
+    pub id: u64,
+    pub class: TagClass,
+    pub inner: Vec<T>,
 }
 
 impl<T: ASNTag + Sized> ASNTag for SetOf<T> {

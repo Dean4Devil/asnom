@@ -7,9 +7,9 @@ use common::TagClass;
 
 #[derive(Clone, Debug)]
 pub struct Null {
-    id: u64,
-    class: TagClass,
-    inner: (),
+    pub id: u64,
+    pub class: TagClass,
+    pub inner: (),
 }
 
 impl ASNTag for Null {
