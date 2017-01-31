@@ -7,11 +7,11 @@ pub mod boolean;
 pub mod null;
 
 // Reexport everything
-pub use integer::Integer;
-pub use sequence::{Sequence, SequenceOf, SetOf};
-pub use octetstring::OctetString;
-pub use boolean::Boolean;
-pub use null::Null;
+pub use self::integer::Integer;
+pub use self::sequence::{Sequence, SequenceOf, SetOf};
+pub use self::octetstring::OctetString;
+pub use self::boolean::Boolean;
+pub use self::null::Null;
 
 pub trait ASNTag {
     /// Encode yourself into a generic Tag format.
