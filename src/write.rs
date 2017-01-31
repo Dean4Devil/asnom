@@ -17,13 +17,19 @@ pub fn encode_into(buf: &mut Vec<u8>, tag: StructureTag) -> io::Result<()> {
     write_type(buf, tag.class, structure, tag.id);
     match tag.payload {
         PL::P(v) => {
+            write_length(buf, v.len());
             for byte in v {
                 buf.push(byte);
             }
         },
         PL::C(tags) => {
+            let mut tmp: Vec<u8> = Vec::new();
             for tag in tags {
-                try!(encode_into(buf, tag));
+                try!(encode_into(&mut tmp, tag));
+            }
+            write_length(buf, tmp.len());
+            for byte in tmp {
+                buf.push(byte);
             }
         }
     };
@@ -89,7 +95,7 @@ pub fn write_type(mut w: &mut Write, class: TagClass, structure: TagStructure, i
 }
 
 // Yes I know you could overflow the length in theory. But, do you have 2^64 bytes of memory?
-pub fn write_length(mut w: &mut Write, mut length: u64) {
+pub fn write_length(mut w: &mut Write, mut length: usize) {
     // Short form
     if length < 128
     {
@@ -104,32 +110,31 @@ pub fn write_length(mut w: &mut Write, mut length: u64) {
 
 
         w.write_u8(count | 0x80);
-        w.write_uint::<BigEndian>(length, count as usize);
+        w.write_uint::<BigEndian>(length as u64, count as usize);
     }
 }
 
-#[cfg(atest)]
+#[cfg(test)]
 mod tests {
     use super::*;
 
+    use std::string;
+
+    use std::default::Default;
+
     use byteorder::{BigEndian, WriteBytesExt};
 
-    use common::{Tag, TagPrimitive, TagConstructed};
-    use common::{TypeHeader, ClassT};
+    use structures::*;
 
     #[test]
     fn encode_simple_tag() {
-        let mut payload: Vec<u8> = Vec::new();
-        payload.write_i16::<BigEndian>(1616);
-
-        let tag = Tag::Primitive(TagPrimitive {
-            class: ClassT::Universal,
-            tag_number: 2u64,
-            inner: payload,
+        let tag = Tag::Integer(Integer {
+            inner: 1616, 
+            .. Default::default()
         });
 
         let mut buf = Vec::<u8>::new();
-        super::encode_into(&mut buf, &tag);
+        super::encode_into(&mut buf, tag.into_structure());
 
         assert_eq!(buf, vec![0x2, 0x2, 0x06, 0x50]);
     }
@@ -137,21 +142,19 @@ mod tests {
     #[test]
     fn encode_constructed_tag()
     {
-        let childtag = Tag::Primitive(TagPrimitive {
-            class: ClassT::Universal,
-            tag_number: 12u64,
-            inner: "Hello World!".to_string().into_bytes(),
-        });
-
-        let tag = Tag::Constructed(TagConstructed {
-            class: ClassT::Universal,
-            tag_number: 16u64,
-            inner: vec![childtag],
+        let tag = Tag::Sequence(Sequence {
+            inner: vec![
+                Tag::OctetString(OctetString {
+                    inner: String::from("Hello World!").into_bytes(),
+                    .. Default::default()
+                })
+            ],
+            .. Default::default()
         });
 
         let mut buf = Vec::<u8>::new();
-        super::encode_into(&mut buf, &tag);
+        super::encode_into(&mut buf, tag.into_structure());
 
-        assert_eq!(buf, vec![48,14,12,12,72,101,108,108,111,32,87,111,114,108,100,33]);
+        assert_eq!(buf, vec![48,14,4,12,72,101,108,108,111,32,87,111,114,108,100,33]);
     }
 }
