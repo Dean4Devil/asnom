@@ -1,4 +1,4 @@
-use common::{TagClass, TagStructure};
+use common::TagClass;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct StructureTag {

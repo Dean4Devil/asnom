@@ -1,13 +1,3 @@
-use traits::AsBER;
-
-use universal::UniversalTag;
-use specific::SpecificTag;
-
-pub enum ContentTag<T> {
-    Universal(UniversalTag<T>),
-    Specific(SpecificTag<T>)
-}
-
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum TagStructure {
     Primitive = 0,

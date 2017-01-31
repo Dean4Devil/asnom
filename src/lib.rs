@@ -6,10 +6,9 @@ pub mod parse;
 pub mod write;
 
 
-pub mod traits;
 pub mod common;
 pub mod universal;
-pub mod specific;
+pub mod structures;
 pub mod structure;
 
 pub use nom::IResult;
