@@ -125,6 +125,7 @@ mod tests {
     use byteorder::{BigEndian, WriteBytesExt};
 
     use structures::*;
+    use common::TagClass::*;
 
     #[test]
     fn encode_simple_tag() {
@@ -156,5 +157,52 @@ mod tests {
         super::encode_into(&mut buf, tag.into_structure());
 
         assert_eq!(buf, vec![48,14,4,12,72,101,108,108,111,32,87,111,114,108,100,33]);
+    }
+
+    #[test]
+    fn complex_tag()
+    {
+        let tag = Tag::Sequence(Sequence {
+            inner: vec![
+                Tag::Integer(Integer {
+                    inner: 1,
+                    .. Default::default()
+                }),
+                Tag::Sequence(Sequence {
+                    id: 0,
+                    class: Application,
+                    inner: vec![
+                           Tag::Integer(Integer {
+                               inner: 3,
+                                .. Default::default()
+                           }),
+                           Tag::OctetString(OctetString {
+                               inner: String::from("cn=root,dc=plabs").into_bytes(),
+                                .. Default::default()
+                           }),
+                           Tag::OctetString(OctetString {
+                               id: 0,
+                               class: Context,
+                               inner: String::from("asdf").into_bytes(),
+                           })
+                    ]
+                })
+            ],
+            .. Default::default()
+        });
+
+        let expected = vec![
+            0x30, 0x20,
+                0x02, 0x01, 0x01,
+                0x60, 0x1B,
+                    0x02, 0x01, 0x03,
+                    0x04, 0x10, 0x63, 0x6e, 0x3d, 0x72, 0x6f, 0x6f, 0x74, 0x2c, 0x64, 0x63, 0x3d, 0x70, 0x6c, 0x61, 0x62, 0x73,
+                    0x80, 0x04, 0x61, 0x73, 0x64, 0x66
+        ];
+
+        let mut buf = Vec::<u8>::new();
+        super::encode_into(&mut buf, tag.into_structure());
+
+        assert_eq!(buf, expected);
     }
 }
