@@ -4,6 +4,12 @@ version = "0.1.0"
 authors = ["Gregor Reitzenstein <dean4devil@paranoidlabs.org>"]
 license = "MIT"
 
+descriptio = "A ASN.1 BER Parser&Writer based on Nom"
+repository = "https://github.com/dequbed/asnom"
+
+keywords = ["ASN.1", "BER", "Nom"]
+categories = ["encoding", "parsing"]
+
 [dependencies]
 nom = "2.0.1"
 byteorder = "1.0.0"
