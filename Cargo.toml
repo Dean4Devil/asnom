@@ -7,7 +7,7 @@ license = "MIT"
 description = "A ASN.1 BER Parser&Writer based on Nom"
 repository = "https://github.com/dequbed/asnom"
 
-keywords = ["ASN.1", "BER", "Nom"]
+keywords = ["ASN1", "BER", "Nom"]
 categories = ["encoding", "parsing"]
 
 [dependencies]
