@@ -5,7 +5,6 @@ use std::io;
 use std::io::Write;
 
 use byteorder::BigEndian;
-use byteorder::ByteOrder;
 use byteorder::WriteBytesExt;
 
 pub fn encode_into(buf: &mut Vec<u8>, tag: StructureTag) -> io::Result<()> {
@@ -38,7 +37,7 @@ pub fn encode_into(buf: &mut Vec<u8>, tag: StructureTag) -> io::Result<()> {
 }
 
 pub fn write_type(mut w: &mut Write, class: TagClass, structure: TagStructure, id: u64) {
-    let mut extended_tag: Option<Vec<u8>> = None;
+    let extended_tag: Option<Vec<u8>>;
 
     let type_byte = {
         // First two bits: Class
@@ -54,7 +53,7 @@ pub fn write_type(mut w: &mut Write, class: TagClass, structure: TagStructure, i
             while tag > 0
             {
                 // Only take the 7 lower bits.
-                let mut byte = (tag & 0x7F) as u8;
+                let byte = (tag & 0x7F) as u8;
 
                 tag >>= 7;
 
@@ -73,9 +72,7 @@ pub fn write_type(mut w: &mut Write, class: TagClass, structure: TagStructure, i
         }
     }; // let type_byte
 
-    w.write_u8(type_byte);
-
-    let mut written = 1;
+    let _ = w.write_u8(type_byte);
 
     if let Some(mut ext_bytes) = extended_tag
     {
@@ -86,20 +83,20 @@ pub fn write_type(mut w: &mut Write, class: TagClass, structure: TagStructure, i
             // Set the first bit
             byte |= 0x80;
 
-            w.write_u8(byte);
+            let _ = w.write_u8(byte);
         }
 
         let byte = ext_bytes.pop().unwrap();
-        w.write_u8(byte);
+        let _ = w.write_u8(byte);
     }
 }
 
 // Yes I know you could overflow the length in theory. But, do you have 2^64 bytes of memory?
-pub fn write_length(mut w: &mut Write, mut length: usize) {
+pub fn write_length(mut w: &mut Write, length: usize) {
     // Short form
     if length < 128
     {
-        w.write_u8(length as u8);
+        let _ = w.write_u8(length as u8);
     }
     // Long form
     else
@@ -109,8 +106,8 @@ pub fn write_length(mut w: &mut Write, mut length: usize) {
         while {count += 1; len >>= 8; len > 0 }{}
 
 
-        w.write_u8(count | 0x80);
-        w.write_uint::<BigEndian>(length as u64, count as usize);
+        let _ = w.write_u8(count | 0x80);
+        let _ = w.write_uint::<BigEndian>(length as u64, count as usize);
     }
 }
 

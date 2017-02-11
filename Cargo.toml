@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Gregor Reitzenstein <dean4devil@paranoidlabs.org>"]
 license = "MIT"
 
-descriptio = "A ASN.1 BER Parser&Writer based on Nom"
+description = "A ASN.1 BER Parser&Writer based on Nom"
 repository = "https://github.com/dequbed/asnom"
 
 keywords = ["ASN.1", "BER", "Nom"]

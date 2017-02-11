@@ -5,7 +5,7 @@ use structure;
 
 use std::default;
 
-use byteorder::{BigEndian, WriteBytesExt, ReadBytesExt};
+use byteorder::{BigEndian, WriteBytesExt};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Integer {
