@@ -4,7 +4,7 @@ use super::{ASNTag, Tag};
 use common::TagClass;
 
 // Explitic tags don't implement Default because that just wouldn't make sense.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ExplicitTag {
     pub id: u64,
     pub class: TagClass,

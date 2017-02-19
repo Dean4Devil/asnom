@@ -25,7 +25,7 @@ pub trait ASNTag {
     fn into_structure(self) -> structure::StructureTag;
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 /// This enum does not cover all ASN.1 Types but only the types needed for LDAPv3.
 pub enum Tag {
     Integer(integer::Integer),

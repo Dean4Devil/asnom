@@ -5,7 +5,7 @@ use structure;
 use super::ASNTag;
 use common::TagClass;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct OctetString {
     pub id: u64,
     pub class: TagClass,

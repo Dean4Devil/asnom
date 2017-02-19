@@ -7,7 +7,7 @@ use std::default;
 
 use byteorder::{BigEndian, WriteBytesExt};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Integer {
     pub id: u64,
     pub class: TagClass,

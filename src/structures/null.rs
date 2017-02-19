@@ -5,7 +5,7 @@ use structure;
 use super::ASNTag;
 use common::TagClass;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Null {
     pub id: u64,
     pub class: TagClass,
