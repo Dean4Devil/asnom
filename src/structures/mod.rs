@@ -5,6 +5,7 @@ pub mod sequence;
 pub mod octetstring;
 pub mod boolean;
 pub mod null;
+pub mod explicit;
 
 // Reexport everything
 pub use self::integer::Integer;
@@ -31,6 +32,7 @@ pub enum Tag {
     OctetString(octetstring::OctetString),
     Boolean(boolean::Boolean),
     Null(null::Null),
+    ExplicitTag(explicit::ExplicitTag),
     StructureTag(structure::StructureTag),
 }
 
@@ -42,6 +44,7 @@ impl ASNTag for Tag {
             Tag::OctetString(i)  => i.into_structure(),
             Tag::Boolean(i)      => i.into_structure(),
             Tag::Null(i)         => i.into_structure(),
+            Tag::ExplicitTag(i)  => i.into_structure(),
             Tag::StructureTag(s) => s
         }
     }
