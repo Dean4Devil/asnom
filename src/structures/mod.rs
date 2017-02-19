@@ -13,6 +13,7 @@ pub use self::sequence::{Sequence, SequenceOf, SetOf};
 pub use self::octetstring::OctetString;
 pub use self::boolean::Boolean;
 pub use self::null::Null;
+pub use self::explicit::ExplicitTag;
 
 pub trait ASNTag {
     /// Encode yourself into a generic Tag format.
