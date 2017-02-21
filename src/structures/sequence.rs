@@ -32,7 +32,7 @@ impl default::Default for Sequence {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SequenceOf<T> {
     pub id: u64,
     pub class: TagClass,
@@ -59,7 +59,7 @@ impl<T: ASNTag + Sized> default::Default for SequenceOf<T> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SetOf<T> {
     pub id: u64,
     pub class: TagClass,
