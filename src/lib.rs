@@ -13,3 +13,9 @@ pub mod structure;
 
 pub use nom::IResult;
 pub use nom::IResult::*;
+
+pub use nom::Consumer;
+pub use nom::ConsumerState;
+pub use nom::Input;
+pub use nom::Move;
+pub use parse::Parser;

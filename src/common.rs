@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum TagStructure {
     Primitive = 0,
     Constructed = 1,
@@ -14,7 +14,7 @@ impl TagStructure {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum TagClass {
     Universal = 0,
     Application = 1,

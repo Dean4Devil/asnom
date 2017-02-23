@@ -4,6 +4,13 @@ use common::TagClass;
 
 use nom;
 use nom::InputLength;
+use nom::IResult;
+use nom::Consumer;
+use nom::ConsumerState;
+use nom::ConsumerState::*;
+use nom::Input;
+use nom::Input::*;
+use nom::Move;
 
 named!(class_bits<(&[u8], usize), TagClass>,
     map_opt!(
@@ -109,6 +116,43 @@ pub fn parse_tag(i: &[u8]) -> nom::IResult<&[u8], StructureTag> {
         id: id,
         payload: pl,
     })
+}
+
+pub struct Parser {
+    state: ConsumerState<StructureTag, (), Move>,
+}
+
+impl Parser {
+    pub fn new() -> Parser {
+        Parser { state: Continue(Move::Consume(0)) }
+    }
+}
+
+impl<'a> Consumer<&'a [u8], StructureTag, (), Move> for Parser {
+    fn handle(&mut self, input: Input<&[u8]>) -> &ConsumerState<StructureTag, (), Move> {
+        use nom::Offset;
+        match input {
+            Empty | Eof(None) => self.state(),
+            Element(data) | Eof(Some(data)) => {
+                self.state = match parse_tag(data) {
+                    IResult::Incomplete(n) => {
+                        Continue(Move::Await(n))
+                    },
+                    IResult::Error(_) => Error(()),
+                    IResult::Done(i, o) => {
+                        Done(Move::Consume(data.offset(i)), o)
+                    }
+                };
+
+                &self.state
+            }
+        }
+
+    }
+
+    fn state(&self) -> &ConsumerState<StructureTag, (), Move> {
+        &self.state
+    }
 }
 
 #[cfg(test)]

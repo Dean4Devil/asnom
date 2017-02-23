@@ -1,13 +1,13 @@
 use common::TagClass;
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Eq)]
 pub struct StructureTag {
     pub class: TagClass,
     pub id: u64,
     pub payload: PL
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Eq)]
 pub enum PL {
     P(Vec<u8>),
     C(Vec<StructureTag>),
